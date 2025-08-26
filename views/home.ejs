@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChatApp</title>
+    <%- include("partial/header") %>
+  </head>
+  <body>
+    <div class="container-fluid p-0 chat-container">
+      <div class="row g-0 h-100">
+        <!-- Sidebar -->
+        <div class="col-lg-3 col-md-4 col-sm-2 sidebar">
+          <div class="d-flex align-items-center border-bottom">
+            <div class="me-3 menu-toggle position-relative">
+              <button class="btn-circle">
+                <i class="fas fa-bars"></i>
+              </button>
+            </div>
+            <input
+              type="text"
+              class="form-control rounded-pill me-2 w-50"
+              placeholder="Search..."
+              id="searchInput"
+            />
+            <div class="d-flex align-items-center ms-auto">
+              <div
+                class="user-avatar me-2"
+                style="background-color: #727281; color: white"
+              >
+                <%= user.name.substring(0,2).toUpperCase() %>
+              </div>
+              <h6 class="user-name m-0"><%= user.name %></h6>
+            </div>
+          </div>
+
+          <div class="user-list">
+            <div class="no-results d-none text-muted px-3 py-2">
+              No users found
+            </div>
+            <% allUser.filter(u => u.email !== user.email).forEach(friend => {
+            %>
+            <div
+              class="user-item d-flex align-items-center friend-item search-friend"
+              data-id="<%= friend._id %>"
+              data-name="<%= friend.name %>"
+            >
+              <div class="user-avatar">
+                <%= friend.name.substring(0,2).toUpperCase() %>
+              </div>
+              <div class="user-info">
+                <h6 class="user-name"><%= friend.name %></h6>
+              </div>
+            </div>
+            <% }) %>
+          </div>
+        </div>
+
+        <!-- Chat area -->
+        <div class="col-lg-9 col-md-8 col-sm-2 chat-area">
+          <div class="chat-header">
+            <button class="btn-circle menu-toggle me-2">
+              <i class="fas fa-bars"></i>
+            </button>
+            <div class="user-item p-0 border-0">
+              <div class="friend-logo"></div>
+              <div class="user-info">
+                <h6 class="user-name friend-name"></h6>
+              </div>
+            </div>
+            <div class="ms-auto header-icons">
+              <button class="btn-circle option">
+                <i class="fas fa-ellipsis-v"></i>
+              </button>
+              <div class="dropdown-box d-none">
+                <ul class="list-unstyled m-0">
+                  <li>
+                    <i class="fa-solid fa-user px-1"></i>
+                    <strong><%= user.name%></strong>
+                  </li>
+                  <a href="/user/logout"><li>Logout</li></a>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chat messages -->
+          <div class="chat-messages"></div>
+
+          <!-- Input -->
+          <div class="chat-input">
+            <input
+              type="text"
+              class="message-input"
+              placeholder="Type a message"
+            />
+            <button class="btn-send"><i class="fas fa-paper-plane"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay"></div>
+    <%- include("partial/footer") %>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      $(document).ready(function () {
+        const socket = io();
+        let currentFriendId = null;
+        let currentFriendName = null;
+
+        $(document).on("click", ".option", function (e) {
+          console.log("nndnenn");
+          e.stopPropagation(); // prevent auto-close
+          $(this).siblings(".dropdown-box").toggleClass("d-none");
+        });
+
+        // close when clicking outside
+        $(document).click(function () {
+          $(".dropdown-box").addClass("d-none");
+        });
+        $(document).on("click", ".dropdown-box", function (e) {
+          e.stopPropagation(); // keep dropdown open when clicking inside
+        });
+
+        // join room with logged-in user id
+        socket.emit("join", "<%= user._id %>");
+
+        // open chat when clicking friend
+        $(".friend-item").on("click", function () {
+          currentFriendId = $(this).data("id");
+          currentFriendName = $(this).data("name");
+
+          $(".chat-messages").html(""); // reset
+          $(".chat-messages").append(
+            `<div class="text-center text-muted small">Chat with ${currentFriendName}</div>`
+          );
+          $(".friend-logo")
+            .text(currentFriendName.substring(0, 2).toUpperCase())
+            .addClass("user-avatar");
+          $(".friend-name").text(currentFriendName);
+
+          $.get(`/chat/${currentFriendId}`, function (data) {
+            data.messages.forEach((msg) => {
+              // check sender
+              if (msg.sender === "<%= user._id %>") {
+                // my message → right side
+                $(".chat-messages").append(`
+          <div class="message sent">
+            <div>${msg.content}</div>
+            <div class="message-time">
+              ${new Date(msg.createdAt).toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              })}
+            </div>
+          </div>
+        `);
+              } else {
+                // friend’s message → left side
+                $(".chat-messages").append(`
+          <div class="message received">
+            <div>${msg.content}</div>
+            <div class="message-time">
+              ${new Date(msg.createdAt).toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              })}
+            </div>
+          </div>
+        `);
+              }
+            });
+          });
+
+          // close sidebar on mobile
+          $(".sidebar").removeClass("active");
+          $(".overlay").removeClass("active");
+        });
+        // send message
+        function sendMsg() {
+          if (!currentFriendId) {
+            alert("Select a friend first!");
+            return;
+          }
+          let content = $(".message-input").val().trim();
+          if (!content) return;
+
+          socket.emit("private-msg", {
+            senderId: "<%= user._id %>",
+            receiverId: currentFriendId,
+            content: content,
+          });
+
+          // show message instantly
+          $(".chat-messages").append(`
+          <div class="message sent">
+            <div>${content}</div>
+            <div class="message-time">${new Date().toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            })}</div>
+          </div>
+        `);
+
+          $(".message-input").val("");
+          $(".chat-messages").scrollTop($(".chat-messages")[0].scrollHeight);
+        }
+
+        // button + Enter key
+        $(".btn-send").on("click", sendMsg);
+        $(".message-input").on("keypress", function (e) {
+          if (e.which === 13) sendMsg();
+        });
+
+        // receive private message
+        socket.on("private-msg", (msg) => {
+          if (
+            msg.sender === currentFriendId ||
+            msg.receiverId === currentFriendId
+          ) {
+            $(".chat-messages").append(`
+            <div class="message received">
+              <div>${msg.content}</div>
+              <div class="message-time">${new Date().toLocaleTimeString(
+                "en-US",
+                {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+                }
+              )}</div>
+            </div>
+          `);
+
+            $(".chat-messages").scrollTop($(".chat-messages")[0].scrollHeight);
+          }
+        });
+
+        // sidebar toggle
+        $(".menu-toggle").on("click", function () {
+          $(".sidebar").toggleClass("active");
+          $(".overlay").toggleClass("active");
+        });
+        $(".overlay").on("click", function () {
+          $(".sidebar").removeClass("active");
+          $(".overlay").removeClass("active");
+        });
+
+        // serach logic:
+        $(document).on("keyup", "#searchInput", function () {
+          let searchText = $(this).val().trim().toLowerCase();
+
+          $(".search-friend").each(function () {
+            let friendName = $(this).data("name").toLowerCase();
+          // console.log(friendName)
+            if (friendName.includes(searchText)) {
+              $(this).removeClass("d-none"); // show matching
+            } else {
+              $(this).addClass("d-none"); // hide not matching
+            }
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
