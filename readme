@@ -1,0 +1,34 @@
+# 💬 Realtime Chat Application
+
+A **Realtime Chat Application** built with **Node.js, Express, MongoDB**, and **WebSockets**.  
+This project allows users to register, login, and chat with each other instantly, similar to WhatsApp-style messaging.
+
+---
+
+## 🚀 Features
+- 🔐 **User Authentication** (Register & Login)
+- 💬 **Realtime Messaging** using WebSockets
+- 👤 **User-to-User Chats**
+- 📱 **Responsive UI**
+
+---
+## 📂 Project Structure
+    chat-app/
+│── server.js # Entry point
+│── package.json # Dependencies
+│── config/ # DB & app config
+│── models/ # Mongoose schemas
+│── routes/ # Express routes
+│── public/ # Frontend files (HTML, CSS, JS)
+│── websocket/ # WebSocket handling
+
+---
+## 🛠️ Tech Stack
+- **Backend:** Node.js, Express.js  
+- **Database:** MongoDB  
+- **WebSocket Server:** External WebSocket integration  
+- **Frontend:** HTML, CSS, JavaScript
+- **Other:** bcrypt (password hashing), JWT (authentication), etc  
+
+## github clone https://github.com/abdullahansari10/chat-app
+

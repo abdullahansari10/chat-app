@@ -3,35 +3,86 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>Login - Professional Portal</title>
     <%- include("partial/header") %>
   </head>
   <body>
     <%- include("partial/nav") %>
-    <div class="container mt-3">
-      <div class="row">
-        <div class="col-12">
-          <div class="">
-            <h2 class="text-center">Create Account</h2>
-            <form action="/user/signup" method="post" class="mt-3">
-              <div class="mb-3">
-                <label class="form-label">Name</label>
-                <input type="text" class="form-control" name="name" />
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Email address</label>
-                <input type="email" class="form-control" name="email" />
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Password</label>
-                <input type="password" class="form-control" name="password" />
-              </div>
-              <button type="submit" class="btn btn-primary">Submit</button>
-            </form>
+    <div class="login-container">
+      <div class="login-card">
+        <div class="login-header">
+          <div class="logo">
+            <div class="logo-icon"></div>
+            <h1>Portal</h1>
           </div>
+          <p class="welcome-text">
+            Welcome ! Please Create your account.
+          </p>
         </div>
+
+        <form class="login-form" action="/user/signup" method="POST">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input
+              type="text"
+              name="name"
+              required
+              placeholder="Enter your name"
+            />
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              placeholder="Enter your email"
+              autocomplete="email"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Password</label>
+            <div class="password-input">
+              <input
+                type="password"
+                id="password"
+                name="password"
+                required
+                placeholder="Enter your password"
+                autocomplete="current-password"
+              />
+              <button
+                type="button"
+                class="toggle-password"
+              >
+                <span class="eye-icon">👁️</span>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="login-btn">
+            <span class="btn-text">Sign up</span>
+            <div class="loading-spinner" style="display: none"></div>
+          </button>
+        </form>
       </div>
     </div>
     <%- include("partial/footer") %>
+    <script>
+       $(".toggle-password").on("click", function () {
+    let $input = $("#password");
+    let $icon = $(this).find(".eye-icon");
+
+    if ($input.attr("type") === "password") {
+      $input.attr("type", "text");   // show password
+      $icon.text("🙈");              // change icon
+    } else {
+      $input.attr("type", "password"); // hide password
+      $icon.text("👁️");
+    }
+  });
+    </script>
   </body>
 </html>
